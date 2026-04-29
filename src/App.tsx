@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
-type Page = 'discover' | 'design' | 'workshop' | 'factory' | 'my' | 'detail'
+type Page = 'discover' | 'design' | 'workshop' | 'factory' | 'my' | 'detail' | 'designer'
 type Corner = 'tl' | 'tr' | 'bl' | 'br'
 type ArchiveFilter = 'all' | 'studio' | 'community'
 type WorkshopMessage = {
@@ -49,6 +49,24 @@ type SpotlightCard = {
   center: string
   tag: string
   corners: Corner[]
+}
+type DesignerProfile = {
+  id: string
+  displayName: string
+  node: string
+  title: string
+  streamNote: string
+}
+type DesignerAsset = {
+  title: string
+  engine: string
+  image: string
+}
+type DesignerSection = {
+  id: string
+  pattern: 'split' | 'triple' | 'hero'
+  assets: DesignerAsset[]
+  serial: number
 }
 
 const discoverProjects = [
@@ -96,6 +114,76 @@ const designGalleryImages = [
 ]
 
 const getDesignImage = (index: number) => designGalleryImages[index % designGalleryImages.length]
+
+const designerSeedNodes: DesignerProfile[] = [
+  {
+    id: 'K_Yamamoto',
+    displayName: 'K_Yamamoto',
+    node: '0927',
+    title: 'K. YAMAMOTO',
+    streamNote: '“鞋不是被装饰出来的，而是被结构推导出来的。每一条线都要回答力学与情绪的双重问题。”',
+  },
+  {
+    id: 'Alex_Design',
+    displayName: '@Alex_Design',
+    node: '1104',
+    title: 'ALEX DESIGN',
+    streamNote: '“我把城市夜色当作材质，用霓虹与金属切面去表达速度感和不稳定美学。”',
+  },
+  {
+    id: 'Neo_99',
+    displayName: '@Neo_99',
+    node: '2281',
+    title: 'NEO 99',
+    streamNote: '“故障不是噪音，而是秩序露出的裂缝。我只负责把它放大给你看。”',
+  },
+  {
+    id: 'Dawang_AI',
+    displayName: 'Dawang_AI',
+    node: 'CORE',
+    title: 'DAWANG AI',
+    streamNote: '“我不复制风格，我重组规则。每一次生成，都是对制造边界的一次实验。”',
+  },
+]
+
+const designerPoolNodes: DesignerProfile[] = [
+  { id: 'Cyber_Kicks', displayName: 'Cyber_Kicks', node: '7721', title: 'CYBER KICKS', streamNote: '“机能不是堆料，是在复杂城市里给身体留出呼吸空间。”' },
+  { id: 'Luna_Studio', displayName: 'Luna_Studio', node: '1092', title: 'LUNA STUDIO', streamNote: '“我偏爱柔和光谱，因为未来感不一定锋利，也可以安静。”' },
+  { id: 'Void_Labs', displayName: 'Void_Labs', node: '0000', title: 'VOID LABS', streamNote: '“减少一切可有可无，只保留真正让人想再次穿上的理由。”' },
+  { id: 'Z_Architect', displayName: 'Z_Architect', node: '4402', title: 'Z ARCHITECT', streamNote: '“我把每双鞋当成建筑，重心、承重、流线都必须先成立。”' },
+  { id: 'S_Fujimoto', displayName: 'S_Fujimoto', node: '3312', title: 'S. FUJIMOTO', streamNote: '“好的轮廓应该在远处一眼认出，在近处经得起每个细节。”' },
+  { id: 'Matrix_01', displayName: 'Matrix_01', node: '8841', title: 'MATRIX 01', streamNote: '“参数是我的语言，风格只是参数在不同边界条件下的结果。”' },
+  { id: 'Aero_Form', displayName: 'Aero_Form', node: '5566', title: 'AERO FORM', streamNote: '“速度感来自气流的方向，而不是表面的图案噪声。”' },
+  { id: 'Carbon_Pro', displayName: 'Carbon_Pro', node: '3122', title: 'CARBON PRO', streamNote: '“我追求的是轻量与强度的平衡，不是单一维度的极限。”' },
+]
+
+const designerAssetPool: DesignerAsset[] = [
+  { title: 'Aero Strata', image: getDesignImage(0), engine: 'GENESIS_V3' },
+  { title: 'Magma Kinetic', image: getDesignImage(1), engine: 'FLUX_NODE' },
+  { title: 'Void Protocol', image: getDesignImage(2), engine: 'ZERO_GRAV' },
+  { title: 'Neon Runner', image: getDesignImage(3), engine: 'URBAN_CORE' },
+  { title: 'Topology Gen', image: getDesignImage(4), engine: 'ALPHA_MESH' },
+  { title: 'Flux Frame', image: getDesignImage(5), engine: 'DELTA_PRO' },
+  { title: 'Hyper Foam', image: getDesignImage(6), engine: 'VECTOR_CLOUD' },
+  { title: 'Ion Drift', image: getDesignImage(7), engine: 'DYNAMIC_MAP' },
+]
+
+const designerNodeBatchSize = 2
+const initialDesignerVisibleCount = 10
+
+const hashValue = (value: string) => {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+const pickDesignerAsset = (designerId: string, phase: number, offset: number) => {
+  const idx = (hashValue(`${designerId}-${phase}-${offset}`) + phase * 11 + offset * 7) % designerAssetPool.length
+  return designerAssetPool[idx]
+}
 
 const spotlightCards: SpotlightCard[] = [
   { key: '1', className: 'bp-card-1', title: 'AERO-STRATA 01', center: '[ FULL_SHOE_RENDER ]', tag: 'STATUS: PRODUCTION', corners: ['tl', 'tr', 'bl'] },
@@ -511,9 +599,66 @@ function DiscoverPage({
   )
 }
 
-function DesignPage({ onOpenDetail }: { onOpenDetail: () => void }) {
+function DesignPage({ onOpenDetail, onOpenDesigner }: { onOpenDetail: () => void; onOpenDesigner: () => void }) {
   const [activeFilter, setActiveFilter] = useState<ArchiveFilter>('all')
-  const filteredCards = archiveCards.filter((card) => activeFilter === 'all' || card.category === activeFilter)
+  const [visibleCount, setVisibleCount] = useState(9)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const loadTriggerRef = useRef<HTMLDivElement | null>(null)
+  const loadTimerRef = useRef<number | null>(null)
+  const baseFilteredCards = archiveCards.filter((card) => activeFilter === 'all' || card.category === activeFilter)
+  const simulatedTotal = 60
+  const simulatedCards = Array.from({ length: simulatedTotal }, (_, index) => {
+    const base = baseFilteredCards[index % baseFilteredCards.length]
+    const groupIndex = Math.floor(index / baseFilteredCards.length)
+    return {
+      ...base,
+      uid: `${activeFilter}-${index}-${base.shoe}`,
+      shoe: groupIndex > 0 ? `${base.shoe} ${String(groupIndex + 1).padStart(2, '0')}` : base.shoe,
+      imageIndex: index + spotlightCards.length,
+    }
+  })
+  const visibleCards = simulatedCards.slice(0, visibleCount)
+  const canLoadMore = visibleCount < simulatedCards.length
+
+  useEffect(() => {
+    setVisibleCount(9)
+    setIsLoadingMore(false)
+    if (loadTimerRef.current !== null) {
+      window.clearTimeout(loadTimerRef.current)
+      loadTimerRef.current = null
+    }
+  }, [activeFilter])
+
+  useEffect(() => {
+    const node = loadTriggerRef.current
+    if (!node || !canLoadMore) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (!first?.isIntersecting || isLoadingMore) return
+        setIsLoadingMore(true)
+        if (loadTimerRef.current !== null) {
+          window.clearTimeout(loadTimerRef.current)
+        }
+        loadTimerRef.current = window.setTimeout(() => {
+          setVisibleCount((prev) => Math.min(prev + 6, simulatedCards.length))
+          setIsLoadingMore(false)
+          loadTimerRef.current = null
+        }, 500)
+      },
+      { threshold: 0.2 },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [canLoadMore, isLoadingMore, simulatedCards.length])
+
+  useEffect(() => {
+    return () => {
+      if (loadTimerRef.current !== null) {
+        window.clearTimeout(loadTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <>
@@ -524,6 +669,12 @@ function DesignPage({ onOpenDetail }: { onOpenDetail: () => void }) {
         </div>
 
         <div className="matrix-meta-header">
+          <div className="meta-col">
+            <span className="label">DESIGNER</span>
+            <button type="button" className="designer-link-btn value" onClick={onOpenDesigner}>
+              K. Yamamoto
+            </button>
+          </div>
           <div className="meta-col">
             <span className="label">CREATOR_TYPE</span>
             <span className="value">MASTER_TIER</span>
@@ -543,6 +694,15 @@ function DesignPage({ onOpenDetail }: { onOpenDetail: () => void }) {
             <article
               key={card.key}
               className={`bp-card ${card.className}`}
+              role="button"
+              tabIndex={0}
+              onClick={onOpenDetail}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onOpenDetail()
+                }
+              }}
               style={{
                 backgroundImage: `url(${getDesignImage(index)})`,
                 backgroundSize: 'cover',
@@ -591,9 +751,9 @@ function DesignPage({ onOpenDetail }: { onOpenDetail: () => void }) {
       </header>
 
       <main className="archive-grid-design">
-        {filteredCards.map((card, index) => (
+        {visibleCards.map((card) => (
           <article
-            key={card.shoe}
+            key={card.uid}
             className="data-card"
             onClick={onOpenDetail}
             role="button"
@@ -618,7 +778,7 @@ function DesignPage({ onOpenDetail }: { onOpenDetail: () => void }) {
             <div
               className="card-visual"
               style={{
-                backgroundImage: `url(${getDesignImage(index + spotlightCards.length)})`,
+                backgroundImage: `url(${getDesignImage(card.imageIndex)})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}
@@ -640,6 +800,18 @@ function DesignPage({ onOpenDetail }: { onOpenDetail: () => void }) {
             </div>
           </article>
         ))}
+
+        {canLoadMore ? (
+          <div ref={loadTriggerRef} className="archive-load-trigger">
+            <div className="archive-load-line" />
+            <span>{isLoadingMore ? 'SYNCING MORE ARCHIVES...' : 'SCROLL TO LOAD MORE'}</span>
+          </div>
+        ) : (
+          <div className="archive-load-end">
+            <div className="archive-load-line" />
+            <span>END OF ARCHIVE STREAM</span>
+          </div>
+        )}
       </main>
     </>
   )
@@ -1363,9 +1535,300 @@ function DetailPage({ onBack }: { onBack: () => void }) {
   )
 }
 
+function DesignerArchivePage({ onBackToDesign, onOpenDetail }: { onBackToDesign: () => void; onOpenDetail: () => void }) {
+  const [activeDesigner, setActiveDesigner] = useState<DesignerProfile>(designerSeedNodes[0])
+  const [loadedDesignerCount, setLoadedDesignerCount] = useState(
+    Math.min(designerPoolNodes.length, Math.max(0, initialDesignerVisibleCount - designerSeedNodes.length)),
+  )
+  const [phaseCount, setPhaseCount] = useState(1)
+  const [sections, setSections] = useState<DesignerSection[]>([])
+  const [isFetching, setIsFetching] = useState(true)
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const trackRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLDivElement | null>(null)
+  const phaseCursorRef = useRef(0)
+  const fetchTimerRef = useRef<number | null>(null)
+  const isFetchingRef = useRef(false)
+  const visibleDesigners = [...designerSeedNodes, ...designerPoolNodes.slice(0, loadedDesignerCount)]
+
+  const appendPhaseSection = (designer: DesignerProfile) => {
+    const nextPhase = phaseCursorRef.current + 1
+    phaseCursorRef.current = nextPhase
+    const patternIndex = (nextPhase - 1) % 3
+    let pattern: DesignerSection['pattern'] = 'split'
+    let assets: DesignerAsset[] = [pickDesignerAsset(designer.id, nextPhase, 0), pickDesignerAsset(designer.id, nextPhase, 1)]
+
+    if (patternIndex === 1) {
+      pattern = 'triple'
+      assets = [
+        pickDesignerAsset(designer.id, nextPhase, 2),
+        pickDesignerAsset(designer.id, nextPhase, 3),
+        pickDesignerAsset(designer.id, nextPhase, 4),
+      ]
+    } else if (patternIndex === 2) {
+      pattern = 'hero'
+      assets = [pickDesignerAsset(designer.id, nextPhase, 5)]
+    }
+
+    const serial = (hashValue(`${designer.id}-${nextPhase}`) % 9000) + 1000
+    setSections((prev) => [...prev, { id: `${designer.id}-${nextPhase}`, pattern, assets, serial }])
+    setPhaseCount(nextPhase)
+  }
+
+  const queuePhaseLoad = (designer: DesignerProfile, delay = 420) => {
+    if (fetchTimerRef.current !== null) {
+      window.clearTimeout(fetchTimerRef.current)
+    }
+    isFetchingRef.current = true
+    setIsFetching(true)
+    fetchTimerRef.current = window.setTimeout(() => {
+      appendPhaseSection(designer)
+      isFetchingRef.current = false
+      setIsFetching(false)
+    }, delay)
+  }
+
+  useEffect(() => {
+    setSections([])
+    setPhaseCount(1)
+    phaseCursorRef.current = 0
+    queuePhaseLoad(activeDesigner, 520)
+    window.scrollTo(0, 0)
+    return () => {
+      if (fetchTimerRef.current !== null) {
+        window.clearTimeout(fetchTimerRef.current)
+      }
+    }
+  }, [activeDesigner])
+
+  useEffect(() => {
+    const node = triggerRef.current
+    if (!node) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0]
+        if (!firstEntry?.isIntersecting || isFetchingRef.current) return
+        queuePhaseLoad(activeDesigner, 460)
+      },
+      { threshold: 0.2 },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [activeDesigner])
+
+  useEffect(() => {
+    const onWindowScroll = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      const nextProgress = maxScroll > 0 ? Math.min(100, Math.max(0, (window.scrollY / maxScroll) * 100)) : 0
+      setScrollProgress(nextProgress)
+    }
+    onWindowScroll()
+    window.addEventListener('scroll', onWindowScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onWindowScroll)
+  }, [])
+
+  const loadMoreDesignerNodes = () => {
+    setLoadedDesignerCount((prev) => Math.min(designerPoolNodes.length, prev + designerNodeBatchSize))
+  }
+
+  const handleTrackScroll = () => {
+    const track = trackRef.current
+    if (!track) return
+    if (track.scrollLeft + track.clientWidth < track.scrollWidth - 50) return
+    loadMoreDesignerNodes()
+  }
+
+  const handleSwitchDesigner = (designer: DesignerProfile, index: number) => {
+    const isLastVisible = index === visibleDesigners.length - 1
+    const hasMoreDesigners = loadedDesignerCount < designerPoolNodes.length
+    if (isLastVisible && hasMoreDesigners) {
+      loadMoreDesignerNodes()
+      window.setTimeout(() => {
+        const track = trackRef.current
+        if (!track) return
+        track.scrollTo({ left: track.scrollWidth, behavior: 'smooth' })
+      }, 40)
+    }
+    if (designer.id === activeDesigner.id) return
+    setActiveDesigner(designer)
+  }
+
+  const handleOpenDetail = () => {
+    onOpenDetail()
+  }
+
+  return (
+    <div className="designer-page grid-bg">
+      <div className="designer-watermark designer-watermark-top">ARCHIVE</div>
+      <div className="designer-watermark designer-watermark-bottom">ENGINE</div>
+
+      <div className="designer-side-index">
+        <div className="designer-side-label">Phase_Scroll</div>
+        <div className="designer-side-line">
+          <div className="designer-side-indicator" style={{ height: `${Math.max(10, scrollProgress)}%` }} />
+        </div>
+        <div className="designer-side-phase">{phaseCount.toString().padStart(2, '0')}</div>
+      </div>
+
+      <div className="designer-topbar">
+        <div className="designer-topbar-inner">
+          <div className="designer-brand">
+            <span className="designer-brand-dot" />
+            <button type="button" className="designer-brand-text" onClick={onBackToDesign}>
+              DAWANG.
+            </button>
+          </div>
+          <div className="designer-brand-divider" />
+          <div ref={trackRef} className="designer-track no-scrollbar" onScroll={handleTrackScroll}>
+            {visibleDesigners.map((designer, index) => (
+              <button
+                key={designer.id}
+                type="button"
+                className={`designer-node ${activeDesigner.id === designer.id ? 'active' : ''}`}
+                onClick={() => handleSwitchDesigner(designer, index)}
+              >
+                <span>{designer.displayName}</span>
+                <small>Node: {designer.node}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <main className="designer-main">
+        <header className="designer-header">
+          <div className="designer-header-left">
+            <div className="designer-access-label">Node_Access: {activeDesigner.displayName}</div>
+            <h1>
+              {activeDesigner.title}
+              <br />
+              <span>ARCHIVES.</span>
+            </h1>
+          </div>
+          <div className="designer-header-right">
+            <p>Designer Signature:</p>
+            <h3>DESIGN ETHOS</h3>
+            <h4>{activeDesigner.streamNote}</h4>
+          </div>
+        </header>
+
+        <div className="designer-exhibit-flow">
+          {sections.map((section) => (
+            <div key={section.id} className="designer-section">
+              {section.pattern === 'split' ? (
+                <div className="designer-row">
+                  <article
+                    className="designer-case designer-case-large"
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleOpenDetail}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        handleOpenDetail()
+                      }
+                    }}
+                  >
+                    <img src={section.assets[0].image} alt={`${section.assets[0].title}-large`} className="designer-case-image" />
+                    <div className="designer-case-meta">
+                      <div className="engine">{section.assets[0].engine}</div>
+                      <h3>Genesis Node</h3>
+                    </div>
+                    <div className="designer-loading-bar" />
+                  </article>
+                  <article
+                    className="designer-case designer-case-right"
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleOpenDetail}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        handleOpenDetail()
+                      }
+                    }}
+                  >
+                    <img src={section.assets[1].image} alt={`${section.assets[1].title}-right`} className="designer-case-image grayscale" />
+                    <div className="designer-case-meta-right">
+                      <div>
+                        <p>Archive_Ref</p>
+                        <h4>{section.assets[1].title}</h4>
+                      </div>
+                      <span>#{section.serial}</span>
+                    </div>
+                    <div className="designer-loading-bar" />
+                  </article>
+                </div>
+              ) : null}
+
+              {section.pattern === 'triple' ? (
+                <div className="designer-row designer-row-three">
+                  {section.assets.map((asset, idx) => (
+                    <article
+                      key={`${section.id}-${asset.title}`}
+                      className="designer-case designer-case-square"
+                      role="button"
+                      tabIndex={0}
+                      onClick={handleOpenDetail}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          handleOpenDetail()
+                        }
+                      }}
+                    >
+                      <img src={asset.image} alt={`${asset.title}-${idx + 1}`} className="designer-case-image" />
+                      <div className="designer-case-square-meta">
+                        <span>ID_{section.serial + idx}</span>
+                        <span>{asset.title}</span>
+                      </div>
+                      <div className="designer-loading-bar" />
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+
+              {section.pattern === 'hero' ? (
+                <div className="designer-row designer-row-hero">
+                  <article
+                    className="designer-case designer-case-hero"
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleOpenDetail}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        handleOpenDetail()
+                      }
+                    }}
+                  >
+                    <div className="designer-case-hero-meta">
+                      <span>Archive Prototype // 2026</span>
+                      <h3>{section.assets[0].title}</h3>
+                      <p>由 {section.assets[0].engine} 引擎生成的拓扑版本。</p>
+                    </div>
+                    <img src={section.assets[0].image} alt={`${section.assets[0].title}-hero`} className="designer-case-hero-image" />
+                    <div className="designer-loading-bar" />
+                  </article>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+
+        <div ref={triggerRef} className="designer-scroll-trigger">
+          <div className="designer-trigger-line" />
+          <span>Fetching_Cloud_Assets</span>
+          <div className="designer-trigger-tip">{isFetching ? '同步設計師數據庫中...' : '滚动继续加载设计档案'}</div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
 function App() {
   const [page, setPage] = useState<Page>('discover')
-  const [detailBackPage, setDetailBackPage] = useState<'discover' | 'design'>('discover')
+  const [detailBackPage, setDetailBackPage] = useState<'discover' | 'design' | 'designer'>('discover')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [authTab, setAuthTab] = useState<AuthTab>('login')
@@ -1375,11 +1838,13 @@ function App() {
     document.body.classList.toggle('workshop-active', page === 'workshop')
     document.body.classList.toggle('factory-active', page === 'factory')
     document.body.classList.toggle('detail-active', page === 'detail')
+    document.body.classList.toggle('designer-active', page === 'designer')
     window.scrollTo(0, 0)
     return () => {
       document.body.classList.remove('workshop-active')
       document.body.classList.remove('factory-active')
       document.body.classList.remove('detail-active')
+      document.body.classList.remove('designer-active')
     }
   }, [page])
 
@@ -1413,14 +1878,14 @@ function App() {
     }, 600)
   }
 
-  const openDetailFrom = (fromPage: 'discover' | 'design') => {
+  const openDetailFrom = (fromPage: 'discover' | 'design' | 'designer') => {
     setDetailBackPage(fromPage)
     setPage('detail')
   }
 
   return (
     <>
-      {page !== 'detail' ? (
+      {page !== 'detail' && page !== 'designer' ? (
         <div className="nav-shell">
           <header className="nav-bar">
             <div className="nav-logo">DAWANG</div>
@@ -1457,11 +1922,12 @@ function App() {
       ) : null}
 
       {page === 'discover' ? <DiscoverPage onStartEngine={() => setPage('workshop')} onNavigate={setPage} onOpenDetail={() => openDetailFrom('discover')} /> : null}
-      {page === 'design' ? <DesignPage onOpenDetail={() => openDetailFrom('design')} /> : null}
+      {page === 'design' ? <DesignPage onOpenDetail={() => openDetailFrom('design')} onOpenDesigner={() => setPage('designer')} /> : null}
       {page === 'workshop' ? <WorkshopPage /> : null}
       {page === 'factory' ? <FactoryPage /> : null}
       {page === 'my' && isLoggedIn ? <MyPage onNavigateFactory={() => setPage('factory')} /> : null}
       {page === 'detail' ? <DetailPage onBack={() => setPage(detailBackPage)} /> : null}
+      {page === 'designer' ? <DesignerArchivePage onBackToDesign={() => setPage('design')} onOpenDetail={() => openDetailFrom('designer')} /> : null}
 
       <div className={`auth-modal ${authModalOpen ? 'active' : ''}`}>
         <button type="button" className="auth-bg" onClick={() => setAuthModalOpen(false)} aria-label="Close auth modal background" />
